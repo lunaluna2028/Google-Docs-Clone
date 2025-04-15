@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "quill-delta": "^5.1.0",
+    "quill-table-better": "^1.1.6"
+  }
+}

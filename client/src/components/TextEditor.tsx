@@ -1,113 +1,97 @@
 import { useState, useEffect, useCallback } from 'react';
 import Quill from 'quill';
 import 'quill/dist/quill.snow.css';
-import { TOOLBAR_OPTIONS, SAVE_INTERVAL_MS } from '../constants';
+import { SAVE_INTERVAL_MS } from '../constants';
 import { io, Socket } from 'socket.io-client';
 import { useParams } from 'react-router-dom';
+import { createQuillEditor } from "@/toolbar/createQuill";
+import { useAdmin } from '@/context/AdminContext';
 
 export const TextEditor = () => {
-    const [socket, setSocket] = useState<Socket>() ;
-    const [quill, setQuill] = useState<Quill>() ;
-    const { id: documentId } = useParams() ;
-    
-    useEffect(() => {
-        const skt = io(import.meta.env.VITE_SERVER_URL) ;
-        setSocket(skt) ;
-        return () => {
-            skt.disconnect() ;
-        }
-    }, [])
+  const { isAdmin } = useAdmin();
+  const [socket, setSocket] = useState<Socket>();
+  const [quill, setQuill] = useState<Quill>();
+  const { id: documentId } = useParams();
 
-    const wrapperRef = useCallback((wrapper: HTMLDivElement) => {
-        if(!wrapper) return ;
-        wrapper.innerHTML = '' ;
-    
-        const editor = document.createElement("div") ;
-        wrapper.append(editor) ;
+  // 소켓 연결
+  useEffect(() => {
+    const skt = io(import.meta.env.VITE_SERVER_URL);
+    setSocket(skt);
+    return () => {
+      skt.disconnect();
+    };
+  }, []);
 
-        const qul = new Quill(editor, 
-            { 
-                theme: "snow", 
-                modules: {
-                toolbar: TOOLBAR_OPTIONS
-              }
-            });
-        qul.disable() ;   
-        qul.setText("Loading...") ;
-        setQuill(qul) ;
-    }, [])
+  // 에디터 생성
+  const wrapperRef = useCallback((wrapper: HTMLDivElement) => {
+    if (!wrapper) return;
+    const quillInstance = createQuillEditor(wrapper, isAdmin);
+    setQuill(quillInstance);
+  }, [isAdmin]);
 
-    // Sending changes to server.
-    useEffect(() => {
-        if(!socket || !quill){
-            return ;
-        }
+  // 입력 시 서버로 전송
+  useEffect(() => {
+    if (!socket || !quill) return;
 
-        // @ts-ignore
-        const handler = (delta, oldDelta, source) => {
-            if (source !== "user") return ;
-            socket.emit("send-changes", delta) ;
-        }
+    // @ts-ignore
+    const handler = (delta, oldDelta, source) => {
+      if (source !== "user") return;
+      socket.emit("send-changes", delta);
+    };
 
-        quill.on("text-change", handler) ;
+    quill.on("text-change", handler);
+    return () => {
+      quill.off("text-change", handler);
+    };
+  }, [socket, quill]);
 
-        return () => {
-            quill.off("text-change", handler) ;
-        }
+  // 다른 클라이언트의 변경 수신
+  useEffect(() => {
+    if (!socket || !quill) return;
 
-    }, [socket, quill])
+    // @ts-ignore
+    const handler = (delta) => {
+      quill.updateContents(delta);
+    };
 
-    // Receiving changes from server.
-    useEffect(() => {
-        if(!socket || !quill){
-            return ;
-        }
+    socket.on("receive-changes", handler);
+    return () => {
+      socket.off("receive-changes", handler);
+    };
+  }, [socket, quill]);
 
-        // @ts-ignore
-        const handler = (delta) => {
-            quill.updateContents(delta) ;
-        }
+  // 문서 로드
+  useEffect(() => {
+    if (!socket || !quill) return;
 
-        socket.on("receive-changes", handler) ;
+    socket.once("load-document", (document) => {
+      // 1. 기존 내용 제거
+      quill.setContents({ ops: [] }); // 깔끔하게 초기화
+      // 2. 테이블 등 포맷 유지하면서 로드
+      quill.updateContents(document, Quill.sources.SILENT);
+      // 3. 선택 위치 이동 (선택)
+      quill.setSelection(quill.getLength(), Quill.sources.SILENT);
+      quill.enable();
+    });
 
-        return () => {
-            socket.off("receive-changes", handler) ;
-        }
+    const documentName = localStorage.getItem(`document-name-for-${documentId}`) || "Untitled";
+    socket.emit("get-document", { documentId, documentName });
+  }, [socket, quill, documentId]);
 
-    }, [socket, quill])
+  // 자동 저장
+  useEffect(() => {
+    if (!socket || !quill) return;
 
-    useEffect(() => {
-        if(!socket || !quill){
-            return ;
-        }
+    const interval = setInterval(() => {
+      const delta = quill.getContents();
+      socket.emit("save-document", delta);
+    }, SAVE_INTERVAL_MS);
 
-        socket.once("load-document", document => {
-            quill.setContents(document) ;
-            quill.enable() ;
-        })
+    return () => {
+      clearInterval(interval);
+      localStorage.clear();
+    };
+  }, [socket, quill]);
 
-        const documentName = localStorage.getItem(`document-name-for-${documentId}`) || "Untitled" ;
-        socket.emit("get-document", { documentId, documentName }) ;
-
-    }, [socket, quill, documentId])
-
-    useEffect(() => {
-        if(!socket || !quill){
-            return ;
-        }
-        const interval = setInterval(() => {
-            socket.emit("save-document", quill.getContents()) ;
-        }, SAVE_INTERVAL_MS);
-
-        return () => {
-            clearInterval(interval) ;
-            localStorage.clear() ;
-        }
-    }, [socket, quill])
-
-    return(
-        <div className="editorContainer" ref={wrapperRef}>
-
-        </div>
-    )
-}
+  return <div className="editorContainer" ref={wrapperRef} />;
+};

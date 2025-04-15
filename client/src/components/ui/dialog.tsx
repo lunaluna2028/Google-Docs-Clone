@@ -4,6 +4,8 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+//기본 컴포넌트 래핑
+
 const Dialog = DialogPrimitive.Root
 
 const DialogTrigger = DialogPrimitive.Trigger
@@ -12,6 +14,10 @@ const DialogPortal = DialogPrimitive.Portal
 
 const DialogClose = DialogPrimitive.Close
 
+
+// 다이얼로그 뒷배경
+// 다이얼로그가 열릴 때 배경을 어둡게 처리
+// 열림/닫힘 애니메이션 
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -27,6 +33,8 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+
+// 팝업 본체
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -51,6 +59,8 @@ const DialogContent = React.forwardRef<
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
+
+// 팝업의 상단
 const DialogHeader = ({
   className,
   ...props
@@ -65,6 +75,8 @@ const DialogHeader = ({
 )
 DialogHeader.displayName = "DialogHeader"
 
+
+// 팝업의 하단
 const DialogFooter = ({
   className,
   ...props

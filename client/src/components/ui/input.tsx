@@ -1,13 +1,19 @@
+// 자주 사용하는 텍스트 입력 필드
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// 입력 필드에 쓸 수 있는 속성 정의
 export interface InputProps
   extends React.InputHTMLAttributes<HTMLInputElement> {}
 
+// 입력 필드 컴포넌트 본체 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className, type, ...props }, ref) => {
     return (
+
+      // 입력 필드의 기본 스타일을 정의
       <input
         type={type}
         className={cn(

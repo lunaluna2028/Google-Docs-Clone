@@ -135,9 +135,9 @@
 
 .Topbar {
   display: flex;
-  gap: 330px;
+  justify-content: space-between;
   align-items: center;
-  padding: 3px 0 2px 0;
+  padding: 5px 0 5px 0;
 }
 
 .logodiv{
@@ -148,7 +148,7 @@
   justify-content: center;
   align-items: center;
   margin: 5px;
-  margin-left: 50px;
+  margin-left: 40px;
   color: rgb(103, 103, 103);
 }
 
@@ -177,6 +177,64 @@
   width: 500px;
   font-size: 16px;
 }
+
+.isAdmin {
+  display: flex;
+  align-items: center;
+  height: 40px;
+  gap: 10px;
+  margin: 5px;
+  margin-right: 40px;
+}
+
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 28px;
+}
+
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* 토글 바 */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #888;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+/* 토글 원 */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 20px;
+  width: 20px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+/* 토글 ON 상태 */
+.switch input:checked + .slider {
+  background-color: #4f46e5;
+}
+
+.switch input:checked + .slider:before {
+  transform: translateX(22px);
+}
+
 
 *:focus {
   outline: none;
