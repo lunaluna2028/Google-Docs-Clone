@@ -7,6 +7,11 @@ import { useParams } from 'react-router-dom';
 import { createQuillEditor } from "@/toolbar/createQuill";
 import { useAdmin } from '@/context/AdminContext';
 
+
+import { Editor } from '@tiptap/core'
+import StarterKit from '@tiptap/starter-kit'
+
+
 export const TextEditor = () => {
   const { isAdmin } = useAdmin();
   const [socket, setSocket] = useState<Socket>();
