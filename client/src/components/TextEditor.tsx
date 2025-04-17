@@ -7,6 +7,7 @@ import { useParams } from 'react-router-dom';
 import { createQuillEditor } from "@/toolbar/createQuill";
 import { useAdmin } from '@/context/AdminContext';
 
+import "./styles/variables";
 
 import { Editor } from '@tiptap/core'
 import StarterKit from '@tiptap/starter-kit'
