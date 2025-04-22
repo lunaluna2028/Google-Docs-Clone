@@ -53,11 +53,14 @@
   caret-color: var(--tt-cursor-color);
 
   // Paragraph spacing
-  p:not(:first-child) {
-    font-size: 1rem;
-    line-height: 1.6;
+  p {
+    font-size: 0.875rem;       // ← 전체 p 태그 폰트 사이즈 14px
+    line-height: 1;
     font-weight: normal;
-    margin-top: 20px;
+
+    &:not(:first-child) {
+      margin-top: 20px;        // 문단 간 위 간격은 유지
+    }
   }
 
   // Selection styles

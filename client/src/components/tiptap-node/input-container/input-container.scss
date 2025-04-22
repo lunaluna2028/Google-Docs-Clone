@@ -1,0 +1,33 @@
+.input-container {
+    border: 1px dashed #b3b3b3;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 8px;
+    background-color: #f8f9f5;
+    position: relative;
+  
+    &.ProseMirror-selectednode {
+      outline: 2px solid #dad8d2;
+    }
+  
+    .input-inner {
+      display: flex;
+      align-items: center;
+      min-height: 2em;
+      outline: none;
+
+  
+      &:focus {
+        outline: none;
+      }
+  
+      * {
+        color: #333;
+      }
+  
+      p {
+        margin: 0;
+      }
+    }
+  }
+  

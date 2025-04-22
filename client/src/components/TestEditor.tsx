@@ -2,13 +2,15 @@ import * as React from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { Editor } from '@tiptap/core'
 
+// --- 관리자/사용지 ---
+import { useAdmin } from "@/context/AdminContext";
+
 // --- Server ---
 import { io, Socket } from 'socket.io-client';
 import { useParams } from 'react-router-dom';
 
 // --- Core Extensions ---
 import { StarterKit } from "@tiptap/starter-kit"
-import { Image } from "@tiptap/extension-image"
 import { TaskItem } from "@tiptap/extension-task-item"
 import { TaskList } from "@tiptap/extension-task-list"
 import { TextAlign } from "@tiptap/extension-text-align"
@@ -23,17 +25,15 @@ import { Link } from "@/components/tiptap-extension/link-extension"
 import { Selection } from "@/components/tiptap-extension/selection-extension"
 import { TrailingNode } from "@/components/tiptap-extension/trailing-node-extension"
 
-// --- UI Primitives ---
-import { Button } from "@/components/tiptap-ui-primitive/button"
-import { Spacer } from "@/components/tiptap-ui-primitive/spacer"
+// --- Tool Bar ---
 import {
-  Toolbar,
-  ToolbarGroup,
-  ToolbarSeparator,
+  Toolbar
 } from "@/components/tiptap-ui-primitive/toolbar"
+import { MainToolbarContent } from "@/components/MainToolbarContent"
 
 // --- Tiptap Node ---
 import ImageResize from 'tiptap-extension-resize-image';
+import { Image } from "@tiptap/extension-image"
 import { ImageUploadNode } from "@/components/tiptap-node/image-upload-node/image-upload-node-extension"
 import "@/components/tiptap-node/code-block-node/code-block-node.scss"
 import "@/components/tiptap-node/list-node/list-node.scss"
@@ -42,25 +42,17 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 
 
 // --- Tiptap UI ---
-import { HeadingDropdownMenu } from "@/components/tiptap-ui/heading-dropdown-menu"
-import { ImageUploadButton } from "@/components/tiptap-ui/image-upload-button"
-import { ListDropdownMenu } from "@/components/tiptap-ui/list-dropdown-menu"
-import { NodeButton } from "@/components/tiptap-ui/node-button"
-import {
-  HighlightPopover,
-} from "@/components/tiptap-ui/highlight-popover"
-import {
-  LinkPopover,
-} from "@/components/tiptap-ui/link-popover"
-import { MarkButton } from "@/components/tiptap-ui/mark-button"
-import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
-import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
-
 // --- Tables ---
 import Table from '@tiptap/extension-table'
 import TableRow from '@tiptap/extension-table-row'
 import TableHeader from '@tiptap/extension-table-header'
 import TableCell from '@tiptap/extension-table-cell'
+import { TableBubbleMenu } from "@/components/tiptap-extension/my_table-extension/TableBubbleMenu"
+
+
+// --- input container ---
+import { InputContainer } from "@/components/tiptap-node/input-container/input-container-extension" // 경로는 실제 위치에 따라 조정
+
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
@@ -68,79 +60,12 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 // --- Styles ---
 import "@/styles/simple-editor.scss"
 
+// --- 페이지네이션 ---
+import {logTotalContentHeight} from '@/components/pagination/PaginatedRenderer'
 
-const MainToolbarContent = ({ editor }: { editor: Editor | null }) => {
-  return (
-    <>
-      <Spacer />
-
-      <ToolbarGroup>
-        <UndoRedoButton action="undo" />
-        <UndoRedoButton action="redo" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <HeadingDropdownMenu levels={[1, 2, 3, 4]} />
-        <ListDropdownMenu types={["bulletList", "orderedList", "taskList"]} />
-        <NodeButton type="codeBlock" />
-        <NodeButton type="blockquote" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="bold" />
-        <MarkButton type="italic" />
-        <MarkButton type="strike" />
-        <MarkButton type="code" />
-        <MarkButton type="underline" />
-        <HighlightPopover />
-        <LinkPopover />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <MarkButton type="superscript" />
-        <MarkButton type="subscript" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <TextAlignButton align="left" />
-        <TextAlignButton align="center" />
-        <TextAlignButton align="right" />
-        <TextAlignButton align="justify" />
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <Button
-          onClick={() =>
-            editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: false }).run()
-          }
-        >
-          Insert Table
-        </Button>
-      </ToolbarGroup>
-
-      <ToolbarSeparator />
-
-      <ToolbarGroup>
-        <ImageUploadButton text="Add" />
-      </ToolbarGroup>
-
-      <Spacer />
-
-    </>
-  )
-}
 
 export function TestEditor() {
+  const { isAdmin } = useAdmin();
   const [socket, setSocket] = React.useState<Socket>() ;
   const { id: documentId } = useParams() ;
   React.useEffect(() => {
@@ -163,6 +88,7 @@ export function TestEditor() {
     },
     extensions: [
       StarterKit,
+      InputContainer,
       ImageResize,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
@@ -192,7 +118,9 @@ export function TestEditor() {
       }),
       TrailingNode,
       Link.configure({ openOnClick: false }),
+      
     ],
+    
     
   })
 
@@ -202,11 +130,13 @@ export function TestEditor() {
     const handler = () => {
       const json = editor.getJSON();
       socket.emit("send-changes", json); // delta가 아닌 JSON 문서 전체 전송
+      logTotalContentHeight();
     };
   
     editor.on("update", handler);
   
     return () => {
+      
       editor.off("update", handler);
     };
   }, [socket, editor]);
@@ -241,6 +171,7 @@ export function TestEditor() {
     if (!socket || !editor) return;
   
     const interval = setInterval(() => {
+      
       const json = editor.getJSON();
       socket.emit("save-document", json);
     }, 5000);
@@ -254,15 +185,21 @@ export function TestEditor() {
   
   return (
     <EditorContext.Provider value={{ editor }}>
-      <Toolbar>
+      {/* 툴바는 항상 */}
+      <Toolbar className="custom-toolbar">
         <MainToolbarContent editor={editor} />
       </Toolbar>
-      <div className="content-wrapper">
-        <EditorContent
-          editor={editor}
-          role="presentation"
-          className="simple-editor-content"
-        />
+
+      {/* 테이블 전용 버블 메뉴 */}
+      {editor && <TableBubbleMenu editor={editor} />}
+
+      {/* 전체 에디터 래퍼: read-only 모드 제어 */}
+      <div
+        className={`content-wrapper simple-editor-content ${
+          isAdmin ? "" : "read-only"
+        }`}
+      >
+        <EditorContent editor={editor} role="presentation" />
       </div>
     </EditorContext.Provider>
   )
