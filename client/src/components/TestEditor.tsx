@@ -61,7 +61,7 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/styles/simple-editor.scss"
 
 // --- 페이지네이션 ---
-import {logTotalContentHeight} from '@/components/pagination/PaginatedRenderer'
+import {PaginatedEditor} from '@/components/PaginatedEditor.tsx'
 
 
 export function TestEditor() {
@@ -130,7 +130,6 @@ export function TestEditor() {
     const handler = () => {
       const json = editor.getJSON();
       socket.emit("send-changes", json); // delta가 아닌 JSON 문서 전체 전송
-      logTotalContentHeight();
     };
   
     editor.on("update", handler);
