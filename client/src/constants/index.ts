@@ -2,22 +2,9 @@
 
 export const SAVE_INTERVAL_MS = 5000;
 
-// isAdmin 여부에 따라 동적으로 툴바 옵션 생성
-export function getToolbarOptions(isAdmin: boolean) {
-  const baseToolbar = [
-    [{ header: [1, 2, 3, 4, 5, 6, false] }],
-    [{ font: [] }],
-    [{ list: "ordered" }, { list: "bullet" }],
-    ["bold", "italic", "underline"],
-    [{ color: [] }, { background: [] }],
-    [{ script: "sub" }, { script: "super" }],
-    [{ align: [] }],
-    ['link', 'image', 'formula'],
-  ];
+export const PAGE_WIDTH_MM = 210; // A4 가로
+export const PAGE_HEIGHT_MM = 297; // A4 세로
+export const PAGE_PADDING_MM = 25.4; // 1인치
+export const MM_TO_PX = 3.77953; // mm → px 변환계수
 
-  const customTools = isAdmin
-    ? [['table-better', 'input-container']] // 관리자일 때만
-    : [['table-better']];            // 일반 유저는 table만
-
-  return [...baseToolbar, ...customTools, ['clean']];
-}
+export const PAGE_AVAILABLE_HEIGHT_PX = (PAGE_HEIGHT_MM - PAGE_PADDING_MM * 2) * MM_TO_PX;

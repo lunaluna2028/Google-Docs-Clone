@@ -29,24 +29,31 @@ export const PageNode = Node.create({
       const dom = document.createElement("div");
       dom.setAttribute("data-page", "true");
       dom.classList.add("page-node");
-
-      // 스타일 정의 (A4 기준)
-      dom.style.width = "210mm";
-      dom.style.height = "297mm";
-      dom.style.padding = "25.4mm"; // 1 inch
-      dom.style.boxSizing = "border-box";
-      dom.style.background = "white";
-      dom.style.border = "1px solid #ccc";
-      dom.style.margin = "2rem auto";
-      dom.style.overflow = "hidden";
-      dom.style.position = "relative";
-
+  
+      // 스타일 정의
+      Object.assign(dom.style, {
+        width: "210mm",
+        height: "297mm",
+        padding: "25.4mm",
+        background: "white",
+        border: "1px solid #ccc",
+        margin: "2rem auto",
+        boxSizing: "border-box",
+        overflow: "hidden",
+        position: "relative",
+      });
+  
       const contentDOM = document.createElement("div");
+      contentDOM.classList.add("page-content");
+      Object.assign(contentDOM.style, {
+        outline: "none",
+      });
+  
       dom.appendChild(contentDOM);
-
+  
       return {
         dom,
-        contentDOM,
+        contentDOM, // ← 이게 있어야 Tiptap이 내부에 텍스트 넣어줍니다!
       };
     };
   },

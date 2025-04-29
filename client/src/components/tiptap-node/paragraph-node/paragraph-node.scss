@@ -55,7 +55,7 @@
   // Paragraph spacing
   p {
     font-size: 0.875rem;       // ← 전체 p 태그 폰트 사이즈 14px
-    line-height: 1;
+    line-height: 1.25;
     font-weight: normal;
 
     &:not(:first-child) {

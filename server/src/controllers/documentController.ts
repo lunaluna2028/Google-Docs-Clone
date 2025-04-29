@@ -1,6 +1,20 @@
 import { Document } from "../models/documentModel";
 
-const defaultData = "";
+
+const defaultData =  {
+    type: 'doc',
+    content: [
+      {
+        type: 'page',
+        content: [
+          {
+            type: 'paragraph',
+            content: [],
+          },
+        ],
+      },
+    ],
+  };
 
 export const getAllDocuments = async() => {
     const documents = await Document.find() ;

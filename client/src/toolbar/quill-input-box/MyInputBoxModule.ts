@@ -19,7 +19,6 @@ export default class MyInputBoxModule {
   insertInputContainer() {
     const range = this.quill.getSelection();
     if (range) {
-      console.log('InputBoxModule: addHandler called');
       // input-container 삽입
       this.quill.insertEmbed(range.index, 'input-container', '', Quill.sources.USER);
   

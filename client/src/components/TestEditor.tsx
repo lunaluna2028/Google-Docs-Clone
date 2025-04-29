@@ -23,7 +23,6 @@ import { Underline } from "@tiptap/extension-underline"
 // --- Custom Extensions ---
 import { Link } from "@/components/tiptap-extension/link-extension"
 import { Selection } from "@/components/tiptap-extension/selection-extension"
-import { TrailingNode } from "@/components/tiptap-extension/trailing-node-extension"
 
 // --- Tool Bar ---
 import {
@@ -61,13 +60,18 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/styles/simple-editor.scss"
 
 // --- 페이지네이션 ---
-import {PaginatedEditor} from '@/components/PaginatedEditor.tsx'
+import { PageNode } from "@/components/pagination/PageNode" 
+import { Document } from "@tiptap/extension-document"
+import {sanitizeDoc} from "@/components/pagination/pagination-utils"
+import { handleOverflow } from '@/components/pagination';
 
 
 export function TestEditor() {
   const { isAdmin } = useAdmin();
   const [socket, setSocket] = React.useState<Socket>() ;
   const { id: documentId } = useParams() ;
+
+
   React.useEffect(() => {
           const skt = io(import.meta.env.VITE_SERVER_URL) ;
           setSocket(skt) ;
@@ -75,6 +79,13 @@ export function TestEditor() {
               skt.disconnect() ;
           }
       }, [])
+  
+
+
+  const CustomDoc = Document.extend({
+    content: 'page+',
+  })
+
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -87,7 +98,12 @@ export function TestEditor() {
       },
     },
     extensions: [
-      StarterKit,
+      PageNode,
+      CustomDoc,
+      
+      StarterKit.configure({
+        document: false // 기본 doc 비활성화
+      }),
       InputContainer,
       ImageResize,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -116,19 +132,21 @@ export function TestEditor() {
         upload: handleImageUpload,
         onError: (error) => console.error("Upload failed:", error),
       }),
-      TrailingNode,
+      // TrailingNode,
       Link.configure({ openOnClick: false }),
+      
       
     ],
     
     
   })
-
+  // 사용자가 에디터를 수정할 때마다 update 이벤트 발생
+ // 문서 내용을 JSON으로 변환하여 서버에 전송
   React.useEffect(() => {
     if (!socket || !editor) return;
   
     const handler = () => {
-      const json = editor.getJSON();
+      const json = sanitizeDoc(editor.getJSON());
       socket.emit("send-changes", json); // delta가 아닌 JSON 문서 전체 전송
     };
   
@@ -140,11 +158,14 @@ export function TestEditor() {
     };
   }, [socket, editor]);
 
+
+  // 타 사용자로부터의 변경 사항을 수신하여 로컬 에디터에 적용
   React.useEffect(() => {
     if (!socket || !editor) return;
   
     const handler = (newDoc: any) => {
-      editor?.commands.setContent(newDoc, false); // false: history stack에 기록하지 않음
+      // 기본 : setContent(newDoc, false); 
+      editor?.commands.setContent(sanitizeDoc(newDoc), false); // false: history stack에 기록하지 않음
     };
   
     socket.on("receive-changes", handler);
@@ -154,11 +175,13 @@ export function TestEditor() {
     };
   }, [socket, editor]);
   
+
+  // 서버에 문서를 요청하고 서버로부터 한 번만 문서를 수신
   React.useEffect(() => {
     if (!socket || !editor) return;
   
     socket.once("load-document", (doc: any) => {
-      editor.commands.setContent(doc); // Tiptap JSON 포맷이어야 함
+      editor.commands.setContent(sanitizeDoc(doc)); // Tiptap JSON 포맷이어야 함
       editor.setEditable(true);        // 편집 가능하게 설정
     });
   
@@ -166,6 +189,9 @@ export function TestEditor() {
     socket.emit("get-document", { documentId, documentName });
   
   }, [socket, editor, documentId]);
+
+
+  // 자동 저장
   React.useEffect(() => {
     if (!socket || !editor) return;
   
@@ -181,6 +207,25 @@ export function TestEditor() {
     };
   }, [socket, editor]);
 
+
+  // 페이지 넘침 감지 및 페이지 추가
+  
+  React.useEffect(() => {
+    if (!editor) return;
+  
+    const onUpdate = () => {
+      requestAnimationFrame(() => {
+        handleOverflow(editor);
+      });
+    };
+  
+    editor.on('update', onUpdate);
+    return () => {
+      editor.off('update', onUpdate);
+    };
+  }, [editor]);
+  
+
   
   return (
     <EditorContext.Provider value={{ editor }}>
@@ -192,14 +237,32 @@ export function TestEditor() {
       {/* 테이블 전용 버블 메뉴 */}
       {editor && <TableBubbleMenu editor={editor} />}
 
-      {/* 전체 에디터 래퍼: read-only 모드 제어 */}
-      <div
-        className={`content-wrapper simple-editor-content ${
-          isAdmin ? "" : "read-only"
-        }`}
-      >
-        <EditorContent editor={editor} role="presentation" />
-      </div>
-    </EditorContext.Provider>
+      <div className="paginated-editor-wrapper">
+      {editor && <EditorContent editor={editor} />}
+    </div>
+  </EditorContext.Provider>
   )
 }
+
+
+
+// return (
+//   <EditorContext.Provider value={{ editor }}>
+//   {/* 툴바는 항상 */}
+//   <Toolbar className="custom-toolbar">
+//     <MainToolbarContent editor={editor} />
+//   </Toolbar>
+
+//   {/* 테이블 전용 버블 메뉴 */}
+//   {editor && <TableBubbleMenu editor={editor} />}
+
+//   {/* 전체 에디터 래퍼: read-only 모드 제어 */}
+//   <div
+//     className={`content-wrapper simple-editor-content ${
+//       isAdmin ? "" : "read-only"
+//     }`}
+//   >
+//     <EditorContent editor={editor} role="presentation" />
+//   </div>
+// </EditorContext.Provider>
+// )
