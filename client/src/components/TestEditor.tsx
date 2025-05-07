@@ -2,7 +2,7 @@ import * as React from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { Editor } from '@tiptap/core'
 
-// --- 관리자/사용자 ---
+// --- 관리자/사용지 ---
 import { useAdmin } from "@/context/AdminContext";
 
 // --- Server ---
@@ -63,9 +63,6 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 // --- Styles ---
 import "@/styles/simple-editor.scss"
 
-// --- 페이지네이션 ---
-import { PaginatedRenderer } from "@/components/pagination/PaginatedRenderer";
-import { applyTopPaddingToFirstParagraphInPages } from '@/components/pagination/ParagraphProcess';
 
 
 
@@ -73,6 +70,8 @@ export function TestEditor() {
   const { isAdmin } = useAdmin();
   const [socket, setSocket] = React.useState<Socket>() ;
   const { id: documentId } = useParams() ;
+  const pagesRef = React.useRef<HTMLDivElement>(null);
+  const PAGE_HEIGHT = 1000; // 페이지 높이 (px 단위)
 
 
   React.useEffect(() => {
@@ -82,13 +81,8 @@ export function TestEditor() {
               skt.disconnect() ;
           }
       }, [])
-  
-
-
 
   const editor = useEditor({
-
-    
 
     immediatelyRender: false,
     editorProps: {
@@ -100,10 +94,7 @@ export function TestEditor() {
       },
     },
     extensions: [
-      //PageNode,
-      
       StarterKit,
-      
       InputContainer,
       ImageResize,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -134,10 +125,7 @@ export function TestEditor() {
       }),
       // TrailingNode,
       Link.configure({ openOnClick: false }),      
-      
-    ],
-    
-    
+    ],    
   })
   // 사용자가 에디터를 수정할 때마다 update 이벤트 발생
  // 문서 내용을 JSON으로 변환하여 서버에 전송
@@ -208,10 +196,50 @@ export function TestEditor() {
   }, [socket, editor]);
 
 
-  // 페이지 넘침 감지 및 페이지 추가
+  React.useEffect(() => {
+    if (!editor || !pagesRef.current) return;
   
- 
-
+    const adjustNumberOfPages = () => {
+      const content = document.querySelector(".ProseMirror");
+      if (!content) return;
+  
+      const height = content.scrollHeight;
+      const neededPages = Math.floor(height / PAGE_HEIGHT) + 1;
+      const currentPages = pagesRef.current!.querySelectorAll(".page").length;
+  
+      if (neededPages > currentPages) {
+        for (let i = currentPages; i < neededPages; i++) {
+          const page = document.createElement("div");
+          page.className = "page";
+          pagesRef.current!.appendChild(page);
+  
+          const breaker = document.createElement("div");
+          breaker.className = "breaker";
+          pagesRef.current!.appendChild(breaker);
+        }
+      } else if (neededPages < currentPages) {
+        for (let i = currentPages - 1; i >= neededPages; i--) {
+          const lastPage = pagesRef.current!.querySelector(".page:last-child");
+          const lastBreaker = pagesRef.current!.querySelector(".breaker:last-child");
+          if (lastPage) pagesRef.current!.removeChild(lastPage);
+          if (lastBreaker) pagesRef.current!.removeChild(lastBreaker);
+        }
+      }
+    };
+  
+    editor.on("update", adjustNumberOfPages);
+    window.addEventListener("resize", adjustNumberOfPages);
+  
+    // 최초 실행
+    adjustNumberOfPages();
+  
+    return () => {
+      editor.off("update", adjustNumberOfPages);
+      window.removeEventListener("resize", adjustNumberOfPages);
+    };
+  }, [editor]);
+  
+  
   
   return (
     <EditorContext.Provider value={{ editor }}>
@@ -224,12 +252,11 @@ export function TestEditor() {
       {editor && <TableBubbleMenu editor={editor} />}
 
 
-      <div className="editor-main">
-      {editor && <PaginatedRenderer editor={editor} />}
+      <div className="container">
+        <div id="pages" ref={pagesRef} />
+        <EditorContent editor={editor} role="presentation" />
+      {/* {editor && <PaginatedRenderer editor={editor} />} */}
     </div>
-
-      
-  
   </EditorContext.Provider>
   )
 }
