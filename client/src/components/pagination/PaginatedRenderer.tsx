@@ -23,28 +23,23 @@ export const PaginatedRenderer: React.FC<Props> = ({ editor }) => {
   const [pageCount, setPageCount] = useState(1)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (!containerRef.current) return
-  
-      const spans = containerRef.current.querySelectorAll('p > span');
-  
-      console.log(`🔍 총 ${spans.length}개의 span 요소를 찾음`);
-  
-      spans.forEach((span, i) => {
-        const spanElement = span as HTMLElement;
-  ``
-        // 이미 marginTop이 있으면 중복 적용 방지
-        if (!spanElement.style.marginTop) {
-          spanElement.style.marginTop = '40px'; // 테스트용 마진값
-          console.log(`✅ span[${i}]에 marginTop 40px 적용`);
-        }
-      });
-    }, 300);
-  
-    return () => clearTimeout(timer);
-  }, [editor]);
-  
-  
+    if (!containerRef.current) return
+
+    // 높이 추적
+    const calc = () => {
+      const h = containerRef.current!.scrollHeight 
+      
+
+      setPageCount(Math.ceil(h / PAGE_HEIGHT))
+    }
+    calc()
+    
+    
+    // DOM 요소 크기 변화 추적 
+    const obs = new ResizeObserver(calc)
+    obs.observe(containerRef.current)
+    return () => obs.disconnect()
+  }, [editor])
 
   return (
     <div className="paginated-editor-wrapper">
@@ -57,7 +52,7 @@ export const PaginatedRenderer: React.FC<Props> = ({ editor }) => {
       top: i * (PAGE_HEIGHT + PAGE_GAP),
       width: PAGE_WIDTH,
       height: PAGE_HEIGHT,
-      //marginBottom: `${PAGE_GAP}px`, // 추가!
+      //marginBottom: ${PAGE_GAP}px, // 추가!
     }}
   />
 ))}
