@@ -11,6 +11,7 @@ export class ParagraphHandler implements OverflowHandler {
 
   handle(editor: Editor, overflowNode: HTMLElement): void {
     const pos = editor.view.posAtDOM(overflowNode, 0);
+    console.log(pos);
     if (typeof pos !== 'number') return;
 
     this.moveParagraphToNewPage(editor, pos);

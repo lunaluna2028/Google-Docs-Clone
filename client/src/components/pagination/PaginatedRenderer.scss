@@ -1,0 +1,38 @@
+/* PaginatedRenderer.scss */
+
+.paginated-editor-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 794px; /* A4 폭에 맞춤 */
+  margin: 0 auto;
+  background: trsanparent; /* 주변 배경색 */
+}
+
+.page-bg {
+  position: absolute;
+  background: white;
+  border: 1px solid #ccc;
+  z-index: 0;
+  pointer-events: none;
+}
+.paginated-inner {
+  position: relative;
+  z-index: 1;
+  padding: 0 20mm;
+  box-sizing: border-box;
+  overflow-wrap: break-word;
+
+  // ✨ 핵심 부분
+  margin-bottom: 40px; // 페이지 끝에 강제로 gap만큼 공간 줌
+}
+
+
+.interrupt-gap {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  pointer-events: none;
+  user-select: none;
+  z-index: 10;
+}

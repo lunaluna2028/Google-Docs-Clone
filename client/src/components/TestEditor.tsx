@@ -2,7 +2,7 @@ import * as React from "react"
 import { EditorContent, EditorContext, useEditor } from "@tiptap/react"
 import type { Editor } from '@tiptap/core'
 
-// --- 관리자/사용지 ---
+// --- 관리자/사용자 ---
 import { useAdmin } from "@/context/AdminContext";
 
 // --- Server ---
@@ -19,6 +19,10 @@ import { Highlight } from "@tiptap/extension-highlight"
 import { Subscript } from "@tiptap/extension-subscript"
 import { Superscript } from "@tiptap/extension-superscript"
 import { Underline } from "@tiptap/extension-underline"
+
+import Document from '@tiptap/extension-document'
+import Paragraph from '@tiptap/extension-paragraph'
+import Text from '@tiptap/extension-text'
 
 // --- Custom Extensions ---
 import { Link } from "@/components/tiptap-extension/link-extension"
@@ -60,10 +64,9 @@ import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
 import "@/styles/simple-editor.scss"
 
 // --- 페이지네이션 ---
-import { PageNode } from "@/components/pagination/PageNode" 
-import { Document } from "@tiptap/extension-document"
-import {sanitizeDoc} from "@/components/pagination/pagination-utils"
-import { handleOverflow } from '@/components/pagination';
+import { PaginatedRenderer } from "@/components/pagination/PaginatedRenderer";
+import { applyTopPaddingToFirstParagraphInPages } from '@/components/pagination/ParagraphProcess';
+
 
 
 export function TestEditor() {
@@ -82,12 +85,11 @@ export function TestEditor() {
   
 
 
-  const CustomDoc = Document.extend({
-    content: 'page+',
-  })
-
 
   const editor = useEditor({
+
+    
+
     immediatelyRender: false,
     editorProps: {
       attributes: {
@@ -98,12 +100,10 @@ export function TestEditor() {
       },
     },
     extensions: [
-      PageNode,
-      CustomDoc,
+      //PageNode,
       
-      StarterKit.configure({
-        document: false // 기본 doc 비활성화
-      }),
+      StarterKit,
+      
       InputContainer,
       ImageResize,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
@@ -133,8 +133,7 @@ export function TestEditor() {
         onError: (error) => console.error("Upload failed:", error),
       }),
       // TrailingNode,
-      Link.configure({ openOnClick: false }),
-      
+      Link.configure({ openOnClick: false }),      
       
     ],
     
@@ -146,7 +145,8 @@ export function TestEditor() {
     if (!socket || !editor) return;
   
     const handler = () => {
-      const json = sanitizeDoc(editor.getJSON());
+      const json = editor.getJSON();
+      
       socket.emit("send-changes", json); // delta가 아닌 JSON 문서 전체 전송
     };
   
@@ -165,7 +165,7 @@ export function TestEditor() {
   
     const handler = (newDoc: any) => {
       // 기본 : setContent(newDoc, false); 
-      editor?.commands.setContent(sanitizeDoc(newDoc), false); // false: history stack에 기록하지 않음
+      editor?.commands.setContent(newDoc, false); // false: history stack에 기록하지 않음
     };
   
     socket.on("receive-changes", handler);
@@ -181,7 +181,7 @@ export function TestEditor() {
     if (!socket || !editor) return;
   
     socket.once("load-document", (doc: any) => {
-      editor.commands.setContent(sanitizeDoc(doc)); // Tiptap JSON 포맷이어야 함
+      editor.commands.setContent(doc); // Tiptap JSON 포맷이어야 함
       editor.setEditable(true);        // 편집 가능하게 설정
     });
   
@@ -210,21 +210,7 @@ export function TestEditor() {
 
   // 페이지 넘침 감지 및 페이지 추가
   
-  React.useEffect(() => {
-    if (!editor) return;
-  
-    const onUpdate = () => {
-      requestAnimationFrame(() => {
-        handleOverflow(editor);
-      });
-    };
-  
-    editor.on('update', onUpdate);
-    return () => {
-      editor.off('update', onUpdate);
-    };
-  }, [editor]);
-  
+ 
 
   
   return (
@@ -237,9 +223,13 @@ export function TestEditor() {
       {/* 테이블 전용 버블 메뉴 */}
       {editor && <TableBubbleMenu editor={editor} />}
 
-      <div className="paginated-editor-wrapper">
-      {editor && <EditorContent editor={editor} />}
+
+      <div className="editor-main">
+      {editor && <PaginatedRenderer editor={editor} />}
     </div>
+
+      
+  
   </EditorContext.Provider>
   )
 }
@@ -266,3 +256,5 @@ export function TestEditor() {
 //   </div>
 // </EditorContext.Provider>
 // )
+
+

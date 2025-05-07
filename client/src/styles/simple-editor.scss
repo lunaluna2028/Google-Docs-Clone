@@ -165,33 +165,8 @@ body {
     }
   } 
   
-  .tiptap.ProseMirror .page-break {
-    display: block;
-    height: 0;
-    page-break-after: always;
-    margin: 2rem 0;
-    border: none;
-    border-top: 2px dashed #ccc;
-  }
-
-  .paginated-editor-wrapper {
-    padding-bottom: 1rem; /* 5rem 정도 여유를 줌 */
+  .editor-main {
+    margin-top: 24px; // 또는 32px, 원하는 만큼
   }
 
 
-  .page-node {
-    width: 210mm;
-    height: auto;
-    background: white;
-    margin: 20px auto;
-    padding: 25.4mm;
-    box-sizing: border-box;
-    border: 1px solid #ccc;
-    position: relative;
-  }
-  
-  .page-content {
-    height: 245mm;
-    overflow: hidden;
-    outline: none;
-  }
