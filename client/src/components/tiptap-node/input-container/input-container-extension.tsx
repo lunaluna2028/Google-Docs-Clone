@@ -10,7 +10,7 @@ export const InputContainer = Node.create({
   content: "block+",
   isolating: true,
   selectable: true,
-  draggable: false,
+  draggable: true,
 
   addAttributes() {
     return {

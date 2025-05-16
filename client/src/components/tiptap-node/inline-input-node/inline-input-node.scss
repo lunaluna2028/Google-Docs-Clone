@@ -1,0 +1,38 @@
+/* src/components/tiptap-extension/inline-input-node/inline-input-node.scss */
+
+/* wrapper */
+.inline-input-node {
+    display: inline-block;
+  }
+  
+  /* 내부 편집 영역 */
+  .inline-input-inner {
+    display: inline-block;
+    border: 1px dashed var(--tt-gray-light-400);
+    border-radius: 0.25rem;
+    background-color: rgb(245, 245, 245); 
+    cursor: text;
+    padding: 0rem 0.2rem;
+    outline: none;
+  
+    /* 가이드 텍스트: 빈 상태에서만 보여주는 placeholder */
+    &:empty::before {
+      content: attr(data-placeholder);
+      pointer-events: none;
+      color: var(--tt-gray-light-a-400);
+      font-size: 0.7rem;
+    }
+  }
+  
+  /* 관리자 모드(isAdmin=true): guide 스타일 (작고 회색) */
+  .inline-input-inner.admin {
+    color: var(--tt-gray-light-a-400);
+    font-size: 0.875rem;
+  }
+  
+  /* 사용자 모드(isAdmin=false): 일반 텍스트 스타일 */
+  .inline-input-inner.user {
+    color: inherit;
+    font-size: inherit;
+  }
+  

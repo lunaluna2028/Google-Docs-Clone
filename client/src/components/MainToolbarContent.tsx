@@ -17,6 +17,7 @@ import { LinkPopover } from "@/components/tiptap-ui/link-popover"
 import { MarkButton } from "@/components/tiptap-ui/mark-button"
 import { TextAlignButton } from "@/components/tiptap-ui/text-align-button"
 import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button"
+import { InlineInputNode } from "@/components/tiptap-node/inline-input-node/InlineInputNode" 
 
 interface Props {
     editor: Editor | null
@@ -98,6 +99,26 @@ export const MainToolbarContent: React.FC<Props> = ({ editor }) => {
   >
     + InputBox
   </Button>
+  
+  <Button
+        onClick={() =>
+          editor
+            ?.chain()
+            .focus()
+            // ◀️ toggleNode 제거!
+            .insertContent([
+              {
+                type: "inlineInput",
+                attrs: { placeholder: "입력하세요..." },
+                content: [{ type: "text", text: "입력 가이드" }],
+              },
+              { type: "text", text: " " }, // 한 칸짜리 공백으로 커서 밖으로
+            ])
+            .run()
+        }
+      >
+        i
+      </Button>
 </ToolbarGroup>
 
       <Spacer />

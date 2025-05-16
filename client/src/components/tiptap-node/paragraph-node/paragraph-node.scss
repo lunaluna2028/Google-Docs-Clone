@@ -55,11 +55,11 @@
   // Paragraph spacing
   p {
     font-size: 0.875rem;       // ← 전체 p 태그 폰트 사이즈 14px
-    line-height: 1.25;
+    line-height: 1.75;
     font-weight: normal;
 
     &:not(:first-child) {
-      margin-top: 20px;        // 문단 간 위 간격은 유지
+      margin-top: 5px;        // 문단 간 위 간격은 유지
     }
   }
 
@@ -242,25 +242,25 @@
   h1 {
     font-size: 1.5em;
     font-weight: 700;
-    margin-top: 3em;
+   
   }
 
   h2 {
     font-size: 1.25em;
     font-weight: 700;
-    margin-top: 2.5em;
+  
   }
 
   h3 {
     font-size: 1.125em;
     font-weight: 600;
-    margin-top: 2em;
+   
   }
 
   h4 {
     font-size: 1em;
     font-weight: 600;
-    margin-top: 2em;
+ 
   }
 }
 

@@ -46,16 +46,14 @@ import "@/components/tiptap-node/paragraph-node/paragraph-node.scss"
 
 // --- Tiptap UI ---
 // --- Tables ---
-import Table from '@tiptap/extension-table'
-import TableRow from '@tiptap/extension-table-row'
-import TableHeader from '@tiptap/extension-table-header'
-import TableCell from '@tiptap/extension-table-cell'
-import { TableBubbleMenu } from "@/components/tiptap-extension/my_table-extension/TableBubbleMenu"
+import {TableKit} from "@/components/tiptap-extension/my_table-extension/kit/index"
+
+import { TableBubbleMenu } from "@/components/tiptap-extension/my_table-extension/bubble/TableBubbleMenu"
 
 
 // --- input container ---
 import { InputContainer } from "@/components/tiptap-node/input-container/input-container-extension" // 경로는 실제 위치에 따라 조정
-
+import { InlineInputNode } from "@/components/tiptap-node/inline-input-node/InlineInputNode" // 경로는 실제 위치에 따라 조정
 
 // --- Lib ---
 import { handleImageUpload, MAX_FILE_SIZE } from "@/lib/tiptap-utils"
@@ -71,8 +69,9 @@ export function TestEditor() {
   const [socket, setSocket] = React.useState<Socket>() ;
   const { id: documentId } = useParams() ;
   const pagesRef = React.useRef<HTMLDivElement>(null);
-  const PAGE_HEIGHT = 1000; // 페이지 높이 (px 단위)
-
+  const PAGE_HEIGHT = 1177.7; // 페이지 높이 (px 단위) // 가로가 794px 이므로 A4에 맞추려면 약 1122.7px, 여기에 page margin(55px)을 더해야 함.
+  // 나중에 길이 자동화 해야함. 아니면 페이지 많아지면 실제보다 페이지가 적거나 많게 잡히는 버그가 생김. 지금도 그럼.
+    
 
   React.useEffect(() => {
           const skt = io(import.meta.env.VITE_SERVER_URL) ;
@@ -87,6 +86,7 @@ export function TestEditor() {
     immediatelyRender: false,
     editorProps: {
       attributes: {
+        spellcheck: "false",
         autocomplete: "off",
         autocorrect: "off",
         autocapitalize: "off",
@@ -96,6 +96,7 @@ export function TestEditor() {
     extensions: [
       StarterKit,
       InputContainer,
+      InlineInputNode,
       ImageResize,
       TextAlign.configure({ types: ["heading", "paragraph"] }),
       Underline,
@@ -106,15 +107,30 @@ export function TestEditor() {
       Typography,
       Superscript,
       Subscript,
-      Table.configure({
-        resizable: true,
-        HTMLAttributes: {
-          class: 'tiptap-table',
+      TableKit.configure({
+        table: {
+          resizable : true,
+          HTMLAttributes: {
+            class: 'table',
+          },
+        },
+        tableCell: {
+          HTMLAttributes: {
+            class: 'table-cell',
+          },
+        },
+        tableHeader: {
+          HTMLAttributes: {
+            class: 'table-header',
+          },
+        },
+        tableRow: {
+          HTMLAttributes: {
+            class: 'table-row',
+          },
         },
       }),
-      TableRow,
-      TableHeader,
-      TableCell,
+
       Selection,
       ImageUploadNode.configure({
         accept: "image/*",
@@ -200,32 +216,29 @@ export function TestEditor() {
     if (!editor || !pagesRef.current) return;
   
     const adjustNumberOfPages = () => {
-      const content = document.querySelector(".ProseMirror");
-      if (!content) return;
-  
-      const height = content.scrollHeight;
-      const neededPages = Math.floor(height / PAGE_HEIGHT) + 1;
-      const currentPages = pagesRef.current!.querySelectorAll(".page").length;
-  
-      if (neededPages > currentPages) {
-        for (let i = currentPages; i < neededPages; i++) {
-          const page = document.createElement("div");
-          page.className = "page";
-          pagesRef.current!.appendChild(page);
-  
-          const breaker = document.createElement("div");
-          breaker.className = "breaker";
-          pagesRef.current!.appendChild(breaker);
+        const content = document.querySelector(".ProseMirror");
+        if (!content || !pagesRef.current) return;
+      
+        const height      = content.scrollHeight;
+        const neededPages = Math.floor(height / PAGE_HEIGHT);  // 페이지 올림
+        const container   = pagesRef.current;
+      
+        // 1) 기존 요소 전부 제거
+        container.innerHTML = "";
+      
+        // 2) 페이지 수만큼 다시 생성
+        for (let i = 0; i < neededPages; i++) {
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = `
+            <div class="page"></div>
+            <div class="bottom_blank"></div>
+            <div class="breaker"></div>
+            <div class="top_blank"></div>
+          `;
+          container.appendChild(wrapper);
         }
-      } else if (neededPages < currentPages) {
-        for (let i = currentPages - 1; i >= neededPages; i--) {
-          const lastPage = pagesRef.current!.querySelector(".page:last-child");
-          const lastBreaker = pagesRef.current!.querySelector(".breaker:last-child");
-          if (lastPage) pagesRef.current!.removeChild(lastPage);
-          if (lastBreaker) pagesRef.current!.removeChild(lastBreaker);
-        }
-      }
-    };
+      };
+      
   
     editor.on("update", adjustNumberOfPages);
     window.addEventListener("resize", adjustNumberOfPages);
@@ -242,7 +255,7 @@ export function TestEditor() {
   
   
   return (
-    <EditorContext.Provider value={{ editor }}>
+    <EditorContext.Provider value={{ editor }} >
       {/* 툴바는 항상 */}
       <Toolbar className="custom-toolbar">
         <MainToolbarContent editor={editor} />
@@ -252,7 +265,7 @@ export function TestEditor() {
       {editor && <TableBubbleMenu editor={editor} />}
 
 
-      <div className="container">
+      <div className={`container ${isAdmin ? "" : "read-only"}`}>
         <div id="pages" ref={pagesRef} />
         <EditorContent editor={editor} role="presentation" />
       {/* {editor && <PaginatedRenderer editor={editor} />} */}

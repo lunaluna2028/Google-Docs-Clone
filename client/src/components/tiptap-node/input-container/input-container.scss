@@ -1,9 +1,9 @@
 .input-container {
     border: 1px dashed #b3b3b3;
     padding: 1rem;
-    margin: 1rem 0;
+   margin: 0.2rem;
     border-radius: 8px;
-    background-color: #f8f9f5;
+    background-color:  rgb(245, 245, 245);
     position: relative;
   
     &.ProseMirror-selectednode {
@@ -13,7 +13,7 @@
     .input-inner {
       display: flex;
       align-items: center;
-      min-height: 2em;
+      
       outline: none;
 
   
@@ -26,7 +26,8 @@
       }
   
       p {
-        margin: 0;
+        color: var(--tt-gray-light-a-400);
+      font-size: 0.875rem;
       }
     }
   }

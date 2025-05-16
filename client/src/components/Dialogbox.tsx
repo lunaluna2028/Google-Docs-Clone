@@ -1,4 +1,4 @@
-// 문서 새로 만들기기
+// 문서 새로 만들기
 
 import { Button } from "@/components/ui/button"
 import {

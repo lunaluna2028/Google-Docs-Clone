@@ -1,4 +1,4 @@
-// 랜딩 페이지에서 탑바 : 로고 & 검색창창
+// 랜딩 페이지에서 탑바 : 로고 & 검색창
 
 import Img1 from "../assets/hans_logo.png" ;
 import Img2 from "../assets/SearchIcon.jpeg" ;
